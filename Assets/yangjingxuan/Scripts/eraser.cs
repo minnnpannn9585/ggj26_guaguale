@@ -10,10 +10,12 @@ using UnityEngine.UI;
 /// </summary>
 public class eraser : MonoBehaviour
 {
+
     // 上层 mask（RawImage），我们在其 texture 上擦除 alpha
     public RawImage topImage;
     public Texture2D[] brushTextures;
     public Button[] brushButtons;
+    public GameObject[] mouseImages;
 
     // 判定阈值
     [Tooltip("判定像素 alpha<=threshold 为已被擦除")]
@@ -59,12 +61,21 @@ public class eraser : MonoBehaviour
 
         parentCanvas = topImage.canvas;
 
-        // 按钮切换 brush
-        for (int i = 0; i < brushButtons.Length; i++)
+        // 按钮切换 brush：除了切换 currentBrush，还切换 mouseImages 的显示
+        if (brushButtons != null)
         {
-            int idx = i;
-            brushButtons[i].onClick.AddListener(() => currentBrush = idx);
+            for (int i = 0; i < brushButtons.Length; i++)
+            {
+                int idx = i; // capture local copy
+                if (brushButtons[i] != null)
+                {
+                    brushButtons[i].onClick.AddListener(() => OnBrushSelected(idx));
+                }
+            }
         }
+
+        // 初始化 mouseImages 可见性（确保与 currentBrush 同步）
+        UpdateMouseImages(currentBrush);
 
         // 查找场景中所有 IconTarget（你也可以手动赋值）
         IconTarget[] found = FindObjectsOfType<IconTarget>();
@@ -76,6 +87,28 @@ public class eraser : MonoBehaviour
             // 计算 icon 在 drawTexture 的像素矩形
             data.pixelRect = ComputeIconPixelRect(it.GetComponent<RectTransform>());
             icons.Add(data);
+        }
+    }
+
+    // 新增：按钮回调集中处理
+    private void OnBrushSelected(int idx)
+    {
+        currentBrush = Mathf.Clamp(idx, 0, (brushTextures != null ? brushTextures.Length - 1 : 0));
+        UpdateMouseImages(currentBrush);
+    }
+
+    // 新增：根据索引显示对应 mouseImage，隐藏其他
+    private void UpdateMouseImages(int activeIndex)
+    {
+        if (mouseImages == null || mouseImages.Length == 0) return;
+
+        for (int i = 0; i < mouseImages.Length; i++)
+        {
+            var go = mouseImages[i];
+            if (go == null) continue;
+            bool shouldActive = (i == activeIndex);
+            if (go.activeSelf != shouldActive)
+                go.SetActive(shouldActive);
         }
     }
 
