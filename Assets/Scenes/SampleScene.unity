@@ -3349,14 +3349,13 @@ MonoBehaviour:
   brushTextures:
   - {fileID: 2800000, guid: 5ff43b70a6d70ca4ab8f819185a91b8e, type: 3}
   - {fileID: 2800000, guid: b415bc776f8efd44884b79f37c0228fe, type: 3}
-  - {fileID: 10904, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2800000, guid: 1e2479f41de734749b932c4631312f03, type: 3}
   - {fileID: 10916, guid: 0000000000000000f000000000000000, type: 0}
   brushButtons:
   - {fileID: 6129905147865239261}
   - {fileID: 2114072680392819253}
   - {fileID: 7058285120388163248}
   - {fileID: 4566697695474792953}
-  scoreIncrement: 10
   alphaThreshold: 0.1
   requiredRatio: 0.6666667
 --- !u!114 &650720410580117216
@@ -4083,6 +4082,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isCleared: 0
+  scoreValue: 10
 --- !u!224 &5014222168324378666
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4429,6 +4429,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isCleared: 0
+  scoreValue: 10
 --- !u!224 &7832153919805217450
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4488,6 +4489,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isCleared: 0
+  scoreValue: 10
 --- !u!1 &8227134165499568066
 GameObject:
   m_ObjectHideFlags: 0
