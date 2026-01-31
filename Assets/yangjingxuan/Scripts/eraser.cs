@@ -15,9 +15,6 @@ public class eraser : MonoBehaviour
     public Texture2D[] brushTextures;
     public Button[] brushButtons;
 
-    // 小 icon 以独立 GameObject 存在，必须在场景中有 IconTarget 组件
-    public int scoreIncrement = 10;
-
     // 判定阈值
     [Tooltip("判定像素 alpha<=threshold 为已被擦除")]
     public float alphaThreshold = 0.1f;
@@ -27,7 +24,6 @@ public class eraser : MonoBehaviour
     // 内部状态
     private Texture2D drawTexture;
     private int currentBrush = 0;
-    private int score = 0;
     private Canvas parentCanvas;
 
     // 每个 icon 对应的像素矩形与组件引用
@@ -191,10 +187,8 @@ public class eraser : MonoBehaviour
             {
                 // 标记并触发 IconTarget 的 OnCleared
                 icon.cleared = true;
-                icon.target.isCleared = true;
+                // IconTarget.OnCleared 负责设置 isCleared 和记分
                 icon.target.OnCleared();
-                score += scoreIncrement;
-                GameManager.Instance.ChangeScore(scoreIncrement);
             }
         }
     }
