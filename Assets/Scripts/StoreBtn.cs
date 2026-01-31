@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class StoreUi : MonoBehaviour
+public class StoreBtn : MonoBehaviour
 {
     [SerializeField] private RectTransform panel;        // the panel that will move
     [SerializeField] private float moveDistance = 500f;  // distance in pixels to move right
