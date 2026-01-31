@@ -15,6 +15,6 @@ public class InGameUi : MonoBehaviour
     {
         scoreText.text = "Score: " + GameManager.Instance.Score.ToString();
         timerText.text = "Time: " + Mathf.CeilToInt(GameManager.Instance.timer).ToString();
-        timerBar.fillAmount = GameManager.Instance.timer / 60f; // Assuming 60 seconds is the max time
+        timerBar.fillAmount = GameManager.Instance.timer / 99f;
     }
 }

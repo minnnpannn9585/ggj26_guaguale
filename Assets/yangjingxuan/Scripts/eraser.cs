@@ -17,7 +17,6 @@ public class eraser : MonoBehaviour
 
     // 小 icon 以独立 GameObject 存在，必须在场景中有 IconTarget 组件
     public int scoreIncrement = 10;
-    public Text scoreText;
 
     // 判定阈值
     [Tooltip("判定像素 alpha<=threshold 为已被擦除")]
@@ -82,8 +81,6 @@ public class eraser : MonoBehaviour
             data.pixelRect = ComputeIconPixelRect(it.GetComponent<RectTransform>());
             icons.Add(data);
         }
-
-        UpdateScoreText();
     }
 
     void Update()
@@ -109,10 +106,18 @@ public class eraser : MonoBehaviour
             float normalizedX = (localPoint.x - rect.xMin) / rect.width;
             float normalizedY = (localPoint.y - rect.yMin) / rect.height;
 
-            // 考虑 uvRect
+            // 如果归一化坐标超出 [0,1] 说明在 RawImage 可视区域外，禁止擦除
+            if (normalizedX < 0f || normalizedX > 1f || normalizedY < 0f || normalizedY > 1f)
+                return;
+
+            // 考虑 uvRect（RawImage 可能只显示纹理的一部分）
             Rect uv = topImage.uvRect;
             float texU = uv.x + normalizedX * uv.width;
             float texV = uv.y + normalizedY * uv.height;
+
+            // 如果映射到纹理 UV 超出 [0,1]，也禁止擦除（避免在纹理外写像素）
+            if (texU < 0f || texU > 1f || texV < 0f || texV > 1f)
+                return;
 
             int px = Mathf.FloorToInt(texU * drawTexture.width);
             int py = Mathf.FloorToInt(texV * drawTexture.height);
@@ -189,7 +194,7 @@ public class eraser : MonoBehaviour
                 icon.target.isCleared = true;
                 icon.target.OnCleared();
                 score += scoreIncrement;
-                UpdateScoreText();
+                GameManager.Instance.ChangeScore(scoreIncrement);
             }
         }
     }
@@ -248,10 +253,5 @@ public class eraser : MonoBehaviour
         pixelRect.height = Mathf.Max(1, maxY - minY + 1);
 
         return pixelRect;
-    }
-
-    void UpdateScoreText()
-    {
-        if (scoreText != null) scoreText.text = "Score: " + score;
     }
 }
