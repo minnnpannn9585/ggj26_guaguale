@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class shijian : MonoBehaviour
 {
-    
+
         [Tooltip("判定像素 alpha<=threshold 为已被擦除（显现）")]
         public float alphaThreshold = 0.1f;
         [Tooltip("判定为已显现需要的最小比例（0-1）")]
@@ -16,6 +16,14 @@ public class shijian : MonoBehaviour
 
         // optional reference to the RawImage used by eraser; if null we'll try to find the eraser instance
         public RawImage topImage;
+
+        // 新增：在时间改变时显示的 UI 文本预制体（例如 Text 或 TextMeshProUGUI）
+        [Tooltip("可选：在时间改变时显示的 UI 文本预制体（应为 Canvas 下的 UI 元素）")]
+        public GameObject timeTextPrefab;
+        [Tooltip("显示持续时间（秒）")]
+        public float timeTextDuration = 1.5f;
+        [Tooltip("相对于图标位置的偏移（Canvas 本地坐标）")]
+        public Vector2 timeTextOffset = Vector2.zero;
 
         private Texture2D drawTexture;
         private Canvas parentCanvas;
@@ -97,6 +105,35 @@ public class shijian : MonoBehaviour
             {
                 Debug.LogWarning("TimeTrigger: GameManager.Instance is null; cannot apply time delta.");
             }
+
+            // 新增：在 UI Canvas 中显示时间变更文本
+            if (timeTextPrefab != null)
+            {
+                // 找到 Canvas（优先使用 parentCanvas）
+                Canvas uiCanvas = parentCanvas;
+                if (uiCanvas == null)
+                    uiCanvas = GetComponentInParent<Canvas>() ?? FindObjectOfType<Canvas>();
+
+                if (uiCanvas != null)
+                {
+                    GameObject go = Instantiate(timeTextPrefab, uiCanvas.transform);
+                    RectTransform goRt = go.GetComponent<RectTransform>();
+                    RectTransform canvasRt = uiCanvas.GetComponent<RectTransform>();
+
+                    Camera cam = (uiCanvas.renderMode == RenderMode.ScreenSpaceCamera) ? uiCanvas.worldCamera : null;
+                    Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, transform.position);
+                    Vector2 localPoint;
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt, screenPos, cam, out localPoint);
+
+                    if (goRt != null)
+                    {
+                        goRt.anchoredPosition = localPoint + timeTextOffset;
+                    }
+
+                    if (timeTextDuration > 0f)
+                        Destroy(go, timeTextDuration);
+                }
+            }
         }
 
         // Map RectTransform to drawTexture pixel rect (same logic as eraser)
@@ -165,8 +202,17 @@ public class shijian : MonoBehaviour
         [Tooltip("是否只在第一次清除时应用（默认 true）")]
         public bool applyOnce = true;
 
+        // 新增：在时间改变时显示的 UI 文本预制体
+        [Tooltip("可选：在时间改变时显示的 UI 文本预制体（应为 Canvas 下的 UI 元素）")]
+        public GameObject timeTextPrefab;
+        [Tooltip("显示持续时间（秒）")]
+        public float timeTextDuration = 1.5f;
+        [Tooltip("相对于图标位置的偏移（Canvas 本地坐标）")]
+        public Vector2 timeTextOffset = Vector2.zero;
+
         private IconTarget iconTarget;
         private bool applied = false;
+        private Canvas uiCanvas;
 
         void Start()
         {
@@ -175,6 +221,9 @@ public class shijian : MonoBehaviour
             {
                 Debug.LogWarning("TimeOnCleared: no IconTarget found on the same GameObject. This component expects IconTarget to be present.");
             }
+
+            // 尝试找 Canvas
+            uiCanvas = GetComponentInParent<Canvas>() ?? FindObjectOfType<Canvas>();
         }
 
         void Update()
@@ -199,6 +248,27 @@ public class shijian : MonoBehaviour
             else
             {
                 Debug.LogWarning("TimeOnCleared: GameManager.Instance is null; cannot change timer.");
+            }
+
+            // 新增：在 UI Canvas 中显示时间变更文本
+            if (timeTextPrefab != null && uiCanvas != null && iconTarget != null)
+            {
+                GameObject go = Instantiate(timeTextPrefab, uiCanvas.transform);
+                RectTransform goRt = go.GetComponent<RectTransform>();
+                RectTransform canvasRt = uiCanvas.GetComponent<RectTransform>();
+
+                Camera cam = (uiCanvas.renderMode == RenderMode.ScreenSpaceCamera) ? uiCanvas.worldCamera : null;
+                Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, iconTarget.transform.position);
+                Vector2 localPoint;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt, screenPos, cam, out localPoint);
+
+                if (goRt != null)
+                {
+                    goRt.anchoredPosition = localPoint + timeTextOffset;
+                }
+
+                if (timeTextDuration > 0f)
+                    Destroy(go, timeTextDuration);
             }
         }
     

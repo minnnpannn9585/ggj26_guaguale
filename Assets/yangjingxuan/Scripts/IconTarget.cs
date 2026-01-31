@@ -13,6 +13,45 @@ public class IconTarget : MonoBehaviour
     // 每个 icon 的得分（现在将记分逻辑放到这里）
     public int scoreValue = 10;
 
+    // 可选的动画播放支持：优先使用 Animator 的 Trigger，其次回退到 legacy Animation 组件
+    [Tooltip("可选：为该图标指定 Animator 组件，以在清除时播放动画（SetTrigger）")]
+    public Animator animator;
+
+    [Tooltip("Animator 的触发器参数名，留空则使用默认 'Cleared'")]
+    public string animatorTrigger = "Cleared";
+
+    [Tooltip("如果没有 Animator，可选 legacy Animation 组件名（Play）")]
+    public Animation legacyAnimation;
+
+    [Tooltip("清除后是否隐藏该 GameObject（保留原行为）")]
+    public bool hideOnCleared = true;
+
+    // 新增：显示得分文本的预制体（例如一个包含 Text 或 TextMeshProUGUI 的 UI 元素）
+    [Tooltip("可选：在得分时显示的 UI 文本预制体，预制体应为 Canvas 下的 UI 元素（RectTransform）")]
+    public GameObject scoreTextPrefab;
+
+    [Tooltip("新建的得分文本在 Canvas 中显示的持续时间（秒）")]
+    public float scoreTextDuration = 1.5f;
+
+    [Tooltip("得分文本相对图标位置的偏移（以 Canvas 本地坐标为准）")]
+    public Vector2 scoreTextOffset = Vector2.zero;
+
+    private Canvas uiCanvas;
+
+    void Start()
+    {
+        // 自动尝试获取组件以方便使用
+        if (animator == null)
+            animator = GetComponent<Animator>();
+        if (legacyAnimation == null)
+            legacyAnimation = GetComponent<Animation>();
+
+        // 尝试找到合适的 Canvas（优先查找父级 Canvas）
+        uiCanvas = GetComponentInParent<Canvas>();
+        if (uiCanvas == null)
+            uiCanvas = FindObjectOfType<Canvas>();
+    }
+
     // 得分后调用（可修改为播放动画等）
     public void OnCleared()
     {
@@ -26,7 +65,56 @@ public class IconTarget : MonoBehaviour
             GameManager.Instance.ChangeScore(scoreValue);
         }
 
-        // 保留原来的调试输出或在此播放音效/动画
+        // 播放动画：优先 Animator Trigger，然后 legacy Animation
+        if (animator != null)
+        {
+            if (string.IsNullOrEmpty(animatorTrigger)) animatorTrigger = "Cleared";
+            animator.SetTrigger(animatorTrigger);
+        }
+        else if (legacyAnimation != null)
+        {
+            // 尝试播放第一个 clip 名称或默认 clip
+            if (legacyAnimation.clip != null)
+                legacyAnimation.Play(legacyAnimation.clip.name);
+            else if (legacyAnimation.GetClipCount() > 0)
+            {
+                // Play first clip found
+                foreach (AnimationState state in legacyAnimation)
+                {
+                    legacyAnimation.Play(state.name);
+                    break;
+                }
+            }
+        }
+
+        // 新增：在 UI Canvas 中实例化得分文本预制体并放置在图标位置
+        if (scoreTextPrefab != null && uiCanvas != null)
+        {
+            GameObject go = Instantiate(scoreTextPrefab, uiCanvas.transform);
+            RectTransform goRt = go.GetComponent<RectTransform>();
+            RectTransform canvasRt = uiCanvas.GetComponent<RectTransform>();
+
+            // 将世界坐标转换为 Canvas 本地坐标
+            Camera cam = (uiCanvas.renderMode == RenderMode.ScreenSpaceCamera) ? uiCanvas.worldCamera : null;
+            Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, transform.position);
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt, screenPos, cam, out localPoint);
+
+            if (goRt != null)
+            {
+                goRt.anchoredPosition = localPoint + scoreTextOffset;
+            }
+
+            // 自动销毁
+            if (scoreTextDuration > 0f)
+                Destroy(go, scoreTextDuration);
+        }
+
+        // 原来的调试输出或在此播放音效/动画
         print(12345);
+
+        // 根据设置隐藏对象（如果想在动画后隐藏，可改为在动画事件里隐藏）
+        if (hideOnCleared)
+            gameObject.SetActive(false);
     }
 }
