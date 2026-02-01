@@ -36,6 +36,22 @@ public class IconTarget : MonoBehaviour
     [Tooltip("得分文本相对图标位置的偏移（以 Canvas 本地坐标为准）")]
     public Vector2 scoreTextOffset = Vector2.zero;
 
+    // 新增：当得分被倍数影响（例如 mofashu 触发）时要显示的额外文本
+    [Tooltip("可选：当得分被倍数放大时显示的额外 UI 文本预制体")]
+    public GameObject doubleScoreTextPrefab;
+    [Tooltip("倍数文本显示持续时间（秒）")]
+    public float doubleScoreTextDuration = 1.5f;
+    [Tooltip("倍数文本相对图标位置的偏移（Canvas 本地坐标）")]
+    public Vector2 doubleScoreTextOffset = new Vector2(0, 20f);
+
+    // 新增：当负分被倍数放大时显示的额外文本
+    [Tooltip("可选：当负分被倍数放大时显示的额外 UI 文本预制体")]
+    public GameObject multipliedNegativeTextPrefab;
+    [Tooltip("负分倍数文本显示持续时间（秒）")]
+    public float multipliedNegativeTextDuration = 1.5f;
+    [Tooltip("负分倍数文本相对图标位置的偏移（Canvas 本地坐标）")]
+    public Vector2 multipliedNegativeTextOffset = new Vector2(0, -20f);
+
     private Canvas uiCanvas;
 
     void Start()
@@ -59,10 +75,12 @@ public class IconTarget : MonoBehaviour
         if (isCleared) return;
         isCleared = true;
 
+        int appliedPoints = 0;
         // 这里处理得分逻辑（将 GameManager 的调用放在 IconTarget）
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.ChangeScore(scoreValue);
+            // ChangeScore 现在返回实际应用的分数（考虑倍数）
+            appliedPoints = GameManager.Instance.ChangeScore(scoreValue, transform.position);
         }
 
         // 播放动画：优先 Animator Trigger，然后 legacy Animation
@@ -108,6 +126,52 @@ public class IconTarget : MonoBehaviour
             // 自动销毁
             if (scoreTextDuration > 0f)
                 Destroy(go, scoreTextDuration);
+        }
+
+        // 如果实际应用的分数与原始分值不同（意味着倍数生效），显示额外文字
+        if (appliedPoints != 0 && appliedPoints != scoreValue && uiCanvas != null)
+        {
+            // 正分被放大
+            if (appliedPoints > 0 && doubleScoreTextPrefab != null)
+            {
+                GameObject go2 = Instantiate(doubleScoreTextPrefab, uiCanvas.transform);
+                RectTransform go2Rt = go2.GetComponent<RectTransform>();
+                RectTransform canvasRt2 = uiCanvas.GetComponent<RectTransform>();
+
+                Camera cam2 = (uiCanvas.renderMode == RenderMode.ScreenSpaceCamera) ? uiCanvas.worldCamera : null;
+                Vector2 screenPos2 = RectTransformUtility.WorldToScreenPoint(cam2, transform.position);
+                Vector2 localPoint2;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt2, screenPos2, cam2, out localPoint2);
+
+                if (go2Rt != null)
+                {
+                    go2Rt.anchoredPosition = localPoint2 + doubleScoreTextOffset;
+                }
+
+                if (doubleScoreTextDuration > 0f)
+                    Destroy(go2, doubleScoreTextDuration);
+            }
+
+            // 负分被放大
+            if (appliedPoints < 0 && multipliedNegativeTextPrefab != null)
+            {
+                GameObject go3 = Instantiate(multipliedNegativeTextPrefab, uiCanvas.transform);
+                RectTransform go3Rt = go3.GetComponent<RectTransform>();
+                RectTransform canvasRt3 = uiCanvas.GetComponent<RectTransform>();
+
+                Camera cam3 = (uiCanvas.renderMode == RenderMode.ScreenSpaceCamera) ? uiCanvas.worldCamera : null;
+                Vector2 screenPos3 = RectTransformUtility.WorldToScreenPoint(cam3, transform.position);
+                Vector2 localPoint3;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt3, screenPos3, cam3, out localPoint3);
+
+                if (go3Rt != null)
+                {
+                    go3Rt.anchoredPosition = localPoint3 + multipliedNegativeTextOffset;
+                }
+
+                if (multipliedNegativeTextDuration > 0f)
+                    Destroy(go3, multipliedNegativeTextDuration);
+            }
         }
 
         // 原来的调试输出或在此播放音效/动画
