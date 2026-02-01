@@ -121,6 +121,35 @@ public class GameOver : MonoBehaviour
         gameOverTriggered = true;
         Debug.Log("GameOver: revealed ratio reached, ending game.");
 
+        // Ensure game-over UI animations run even if timeScale is set to 0.
+        // Many Animator-driven UI animations stop when Time.timeScale == 0 unless the Animator's
+        // updateMode is set to UnscaledTime. We set that and restart the animator states here.
+        if (gameOverPanel != null)
+        {
+            Animator[] anims = gameOverPanel.GetComponentsInChildren<Animator>(true);
+            for (int i = 0; i < anims.Length; i++)
+            {
+                var a = anims[i];
+                // switch to unscaled time so the animator continues when Time.timeScale == 0
+                a.updateMode = AnimatorUpdateMode.UnscaledTime;
+                // restart the current state so the animation begins visibly on the panel
+                var state = a.GetCurrentAnimatorStateInfo(0);
+                a.Play(state.shortNameHash, 0, 0f);
+            }
+
+            // For legacy Animation components, restart them as well (they are affected by timeScale).
+            Animation[] legacyAnims = gameOverPanel.GetComponentsInChildren<Animation>(true);
+            for (int i = 0; i < legacyAnims.Length; i++)
+            {
+                var la = legacyAnims[i];
+                if (la != null && la.clip != null)
+                {
+                    la.Play(la.clip.name);
+                }
+            }
+        }
+
+        // Freeze game world but keep UI animations using unscaled time
         Time.timeScale = 0f;
 
         if (gameOverPanel != null)

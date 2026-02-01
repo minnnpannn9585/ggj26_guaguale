@@ -41,7 +41,7 @@ public class NextCardBtn : MonoBehaviour
         }
         else
         {
-            //game end
+            GameManager.Instance.EndGame();
         }
     }
 }

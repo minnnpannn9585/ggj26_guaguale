@@ -22,6 +22,9 @@ public class flower : MonoBehaviour
     [Tooltip("触发后增加的分数")]
     public int scoreIncrement = 6;
 
+    [Tooltip("Optional: if the reveal panel animator requires a trigger, set its parameter name here.")]
+    public string revealAnimatorTrigger = "";
+
     private Texture2D drawTexture;
     private Canvas parentCanvas;
     private bool triggered = false;
@@ -118,8 +121,65 @@ public class flower : MonoBehaviour
             yield break;
         }
 
+        // Freeze mouse-follow objects so the player's pointer stays in place during the reveal animation
+        ObjectFollowMouse.freezeInput = true;
+
         // show UI
-        if (revealPanel != null) revealPanel.SetActive(true);
+        if (revealPanel != null)
+        {
+            // Activate panel first so Animator components are available
+            revealPanel.SetActive(true);
+
+            // Ensure UI animators run while Time.timeScale == 0 by switching them to UnscaledTime
+            Animator[] anims = revealPanel.GetComponentsInChildren<Animator>(true);
+            for (int i = 0; i < anims.Length; i++)
+            {
+                var a = anims[i];
+                // keep the animator running when timeScale == 0
+                a.updateMode = AnimatorUpdateMode.UnscaledTime;
+
+                // If a trigger name is provided, set it to start the animation cleanly
+                if (!string.IsNullOrEmpty(revealAnimatorTrigger))
+                {
+                    a.ResetTrigger(revealAnimatorTrigger);
+                    a.SetTrigger(revealAnimatorTrigger);
+                }
+                else
+                {
+                    // restart the current state from beginning so it visibly plays
+                    var state = a.GetCurrentAnimatorStateInfo(0);
+                    a.Play(state.shortNameHash, 0, 0f);
+                }
+            }
+
+            // Also handle legacy Animation components (restart clips)
+            Animation[] legacyAnims = revealPanel.GetComponentsInChildren<Animation>(true);
+            for (int i = 0; i < legacyAnims.Length; i++)
+            {
+                var la = legacyAnims[i];
+                if (la != null && la.clip != null)
+                {
+                    la.Play(la.clip.name);
+                }
+            }
+
+            // If the flower itself has an Animator that should play independently, set it too
+            Animator selfAnimator = GetComponent<Animator>();
+            if (selfAnimator != null)
+            {
+                selfAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+                if (!string.IsNullOrEmpty(revealAnimatorTrigger))
+                {
+                    selfAnimator.ResetTrigger(revealAnimatorTrigger);
+                    selfAnimator.SetTrigger(revealAnimatorTrigger);
+                }
+                else
+                {
+                    var s = selfAnimator.GetCurrentAnimatorStateInfo(0);
+                    selfAnimator.Play(s.shortNameHash, 0, 0f);
+                }
+            }
+        }
 
         // pause game (scaled time off); use realtime wait
         float prevTimeScale = Time.timeScale;
@@ -130,6 +190,9 @@ public class flower : MonoBehaviour
         // hide UI and resume
         if (revealPanel != null) revealPanel.SetActive(false);
         Time.timeScale = prevTimeScale;
+
+        // Unfreeze mouse-follow objects after reveal animation finishes
+        ObjectFollowMouse.freezeInput = false;
 
         // add score
         if (GameManager.Instance != null)

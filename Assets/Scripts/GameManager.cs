@@ -1,6 +1,8 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -22,14 +24,30 @@ public class GameManager : MonoBehaviour
     private float negativeMultiplierRemaining = 0f;
 
     // New: optional UI prefab to show when negative penalties are multiplied
-    [Tooltip("¿ÉÑ¡£ºµ±¼õ·Ö±»±¶ÔöÊ±ÔÚ UI ÉÏÏÔÊ¾µÄÔ¤ÖÆÌå£¨ÀýÈçÌáÊ¾¡®·£·Ö x2¡¯£©")]
+    [Tooltip("Â¿Ã‰Ã‘Â¡Â£ÂºÂµÂ±Â¼ÃµÂ·Ã–Â±Â»Â±Â¶Ã”Ã¶ÃŠÂ±Ã”Ãš UI Ã‰ÃÃÃ”ÃŠÂ¾ÂµÃ„Ã”Â¤Ã–Ã†ÃŒÃ¥Â£Â¨Ã€Ã½ÃˆÃ§ÃŒÃ¡ÃŠÂ¾Â¡Â®Â·Â£Â·Ã– x2Â¡Â¯Â£Â©")]
     public GameObject negativeMultiplierTextPrefab;
 
-    [Tooltip("¸ÃÌáÊ¾ÔÚ UI ÉÏÏÔÊ¾µÄ³ÖÐøÊ±¼ä£¨Ãë£©")]
+    [Tooltip("Â¸ÃƒÃŒÃ¡ÃŠÂ¾Ã”Ãš UI Ã‰ÃÃÃ”ÃŠÂ¾ÂµÃ„Â³Ã–ÃÃ¸ÃŠÂ±Â¼Ã¤Â£Â¨ÃƒÃ«Â£Â©")]
     public float negativeMultiplierTextDuration = 1.5f;
 
-    [Tooltip("ÌáÊ¾Ïà¶ÔÓÚ Canvas ÖÐÐÄµÄÆ«ÒÆ£¨Canvas ±¾µØ×ø±ê£©")]
+    [Tooltip("ÃŒÃ¡ÃŠÂ¾ÃÃ Â¶Ã”Ã“Ãš Canvas Ã–ÃÃÃ„ÂµÃ„Ã†Â«Ã’Ã†Â£Â¨Canvas Â±Â¾ÂµÃ˜Ã—Ã¸Â±ÃªÂ£Â©")]
     public Vector2 negativeMultiplierTextOffset = Vector2.zero;
+
+    // --- New fields for game over handling ---
+    [Header("Game Over UI")]
+    [Tooltip("Panel to show when player wins")]
+    public GameObject winPanel;
+    [Tooltip("Panel to show when player loses")]
+    public GameObject losePanel;
+    [Tooltip("Score threshold to consider a win (Score >= threshold => Win)")]
+    public int winScoreThreshold = 100;
+
+    // Optional references to set final score text in the panels (TextMeshPro)
+    public TMPro.TextMeshProUGUI winPanelScoreText;
+    public TMPro.TextMeshProUGUI losePanelScoreText;
+
+    // Tracks game-over state so EndGame is idempotent
+    private bool isGameOver = false;
 
     private void Awake()
     {
@@ -37,6 +55,12 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // Subscribe to scene loaded to manage cursor visibility per scene.
+            SceneManager.sceneLoaded += OnSceneLoaded;
+
+            // Ensure cursor state is correct for the scene we started in
+            OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
         }
         else
         {
@@ -44,8 +68,36 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        // Unsubscribe to avoid memory leaks / dangling delegates
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        if (Instance == this)
+            Instance = null;
+    }
+
+    // Scene loaded callback: hide cursor in non-main scenes, show in main menu (index 0).
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // If your main menu is not buildIndex 0, change this check to scene.name or desired index.
+        if (scene.buildIndex == 0)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Cursor.visible = false;
+            // Do not change lockState aggressively; keep default behavior. If you want to lock:
+            // Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
     private void Update()
     {
+        if (isGameOver) return;
+
         if(timer >= 59f)
         {
             timer = 59f;
@@ -54,8 +106,7 @@ public class GameManager : MonoBehaviour
         timer -= Time.deltaTime;
         if (timer <= 0)
         {
-            Debug.Log("Time's up!");
-            // Handle end of game logic here
+            EndGame();
         }
 
         // tick multiplier duration for positive
@@ -194,6 +245,37 @@ public class GameManager : MonoBehaviour
         return appliedPoints;
     }
 
+    // Public method to end the game. Chooses win/lose panel based on Score vs winScoreThreshold,
+    // makes the choice only once, and pauses the game.
+    public void EndGame()
+    {
+        if (isGameOver) return;
+        isGameOver = true;
+
+        bool playerWon = Score >= winScoreThreshold;
+
+        // Activate appropriate panel and set score text if assigned
+        if (playerWon)
+        {
+            if (winPanel != null) winPanel.SetActive(true);
+            if (winPanelScoreText != null) winPanelScoreText.text = "æœ€ç»ˆå¾—åˆ†ï¼š" + Score.ToString();
+        }
+        else
+        {
+            if (losePanel != null) losePanel.SetActive(true);
+            if (losePanelScoreText != null) losePanelScoreText.text = "æœ€ç»ˆå¾—åˆ†ï¼š" + Score.ToString();
+        }
+
+        // Pause game world (physics/time-based updates). UI animations that should run must use unscaled time.
+        Time.timeScale = 0f;
+
+        // Optional: make cursor visible / unlock (useful for desktop)
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        Debug.Log($"GameManager.EndGame: {(playerWon ? "Win" : "Lose")}, Score={Score}");
+    }
+
     public void ChangeTimer(float time)
     {
         // If this is a decrease and the ignore is eligible, consume and skip applying it
@@ -204,11 +286,9 @@ public class GameManager : MonoBehaviour
         }
 
         timer += time;
-        if(timer >= 99)
+        if(timer >= 59)
         {
-            timer = 99;
+            timer = 59;
         }
     }
-
-
 }

@@ -33,6 +33,10 @@ public class ObjectFollowMouse : MonoBehaviour
     [Tooltip("Smoothing speed for UI follow")]
     public float smoothUISpeed = 20f;
 
+    // Global freeze flag. When true ObjectFollowMouse will stop updating the target position,
+    // effectively freezing the visible pointer/mouse-follow object in place.
+    public static bool freezeInput = false;
+
     RectTransform _canvasRect;
     RectTransform _parentRect;
 
@@ -61,6 +65,9 @@ public class ObjectFollowMouse : MonoBehaviour
 
     void Update()
     {
+        // Respect global freeze flag: do not update position while frozen
+        if (freezeInput) return;
+
         if (followUI && uiTarget != null && uiCanvas != null)
             FollowMouseUI();
         else
