@@ -39,29 +39,7 @@ public class eraser : MonoBehaviour
 
     void Start()
     {
-        if (topImage == null)
-        {
-            Debug.LogError("eraser: topImage 未设置");
-            enabled = false;
-            return;
-        }
-
-        Texture2D original = topImage.texture as Texture2D;
-        if (original == null)
-        {
-            Debug.LogError("eraser: topImage.texture 不是 Texture2D");
-            enabled = false;
-            return;
-        }
-
-        // 创建可写副本并替换 RawImage 的 texture
-        drawTexture = new Texture2D(original.width, original.height, TextureFormat.RGBA32, false);
-        Graphics.CopyTexture(original, drawTexture);
-        topImage.texture = drawTexture;
-
-        parentCanvas = topImage.canvas;
-
-        // 按钮切换 brush：除了切换 currentBrush，还切换 mouseImages 的显示
+        // 初始化 brush 按钮与鼠标图像
         if (brushButtons != null)
         {
             for (int i = 0; i < brushButtons.Length; i++)
@@ -73,20 +51,84 @@ public class eraser : MonoBehaviour
                 }
             }
         }
-
-        // 初始化 mouseImages 可见性（确保与 currentBrush 同步）
         UpdateMouseImages(currentBrush);
 
-        // 查找场景中所有 IconTarget（你也可以手动赋值）
-        IconTarget[] found = FindObjectsOfType<IconTarget>();
-        foreach (var it in found)
+        // 首次构建 icons 列表（包含所有场景中的 IconTarget）
+        if (icons.Count == 0)
         {
-            IconData data = new IconData();
-            data.target = it;
-            data.cleared = it.isCleared;
-            // 计算 icon 在 drawTexture 的像素矩形
-            data.pixelRect = ComputeIconPixelRect(it.GetComponent<RectTransform>());
-            icons.Add(data);
+            IconTarget[] found = FindObjectsOfType<IconTarget>();
+            foreach (var it in found)
+            {
+                IconData data = new IconData();
+                data.target = it;
+                data.cleared = it.isCleared;
+                data.pixelRect = new RectInt(0, 0, 1, 1);
+                icons.Add(data);
+            }
+        }
+
+        // 使用已有的 topImage 执行一次设置（会创建 drawTexture 并计算 icon 像素区域）
+        if (topImage != null)
+        {
+            SetTopImage(topImage);
+        }
+        else
+        {
+            Debug.LogWarning("eraser: topImage 未在 Inspector 中设置，等待运行时通过 SetTopImage 设置。");
+        }
+    }
+
+    /// <summary>
+    /// 在运行时切换要擦除的顶层 RawImage。
+    /// 会重新创建 drawTexture、更新 parentCanvas，并为所有已知 IconTarget 重新计算像素矩形。
+    /// 调用方应在激活对应卡片（SetActive(true)）后调用此方法；此方法内部会尝试刷新布局。
+    /// </summary>
+    public void SetTopImage(RawImage newTopImage)
+    {
+        if (newTopImage == null)
+        {
+            Debug.LogError("eraser.SetTopImage: newTopImage is null");
+            return;
+        }
+
+        // Ensure layout is up-to-date (so rect transforms / world corners are correct)
+        Canvas.ForceUpdateCanvases();
+
+        topImage = newTopImage;
+
+        parentCanvas = topImage.canvas;
+
+        Texture2D original = topImage.texture as Texture2D;
+        if (original == null)
+        {
+            Debug.LogError("eraser.SetTopImage: topImage.texture 不是 Texture2D");
+            enabled = false;
+            return;
+        }
+
+        // 创建可写副本并替换 RawImage 的 texture
+        drawTexture = new Texture2D(original.width, original.height, TextureFormat.RGBA32, false);
+        // Use Graphics.CopyTexture when possible for performance; fallback if it fails
+        try
+        {
+            Graphics.CopyTexture(original, drawTexture);
+        }
+        catch
+        {
+            // Fallback copy
+            var pixels = original.GetPixels();
+            drawTexture.SetPixels(pixels);
+            drawTexture.Apply();
+        }
+        topImage.texture = drawTexture;
+
+        // 重新计算所有 icon 的像素矩形（基于新的 topImage 布局/uv）
+        for (int i = 0; i < icons.Count; i++)
+        {
+            var icon = icons[i];
+            if (icon == null || icon.target == null) continue;
+            icon.pixelRect = ComputeIconPixelRect(icon.target.GetComponent<RectTransform>());
+            icon.cleared = icon.target.isCleared;
         }
     }
 
@@ -114,6 +156,8 @@ public class eraser : MonoBehaviour
 
     void Update()
     {
+        if (topImage == null || drawTexture == null) return;
+
         if (Input.GetMouseButton(0))
         {
             Vector2 localPoint;
