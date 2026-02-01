@@ -82,12 +82,16 @@ public class IconTarget : MonoBehaviour
             // ChangeScore 现在返回实际应用的分数（考虑倍数）
             appliedPoints = GameManager.Instance.ChangeScore(scoreValue, transform.position);
         }
+        else
+        {
+            Debug.LogWarning($"IconTarget.OnCleared: GameManager.Instance is null for {gameObject.name}. scoreValue={scoreValue}");
+        }
 
         // 播放动画：优先 Animator Trigger，然后 legacy Animation
         if (animator != null)
         {
-            if (string.IsNullOrEmpty(animatorTrigger)) animatorTrigger = "Cleared";
-            animator.SetTrigger(animatorTrigger);
+            string trigger = string.IsNullOrEmpty(animatorTrigger) ? "Cleared" : animatorTrigger;
+            animator.SetTrigger(trigger);
         }
         else if (legacyAnimation != null)
         {
@@ -104,6 +108,10 @@ public class IconTarget : MonoBehaviour
                 }
             }
         }
+
+        // 确保有 Canvas 可用（在某些情况下 Start 未找到）
+        if (uiCanvas == null)
+            uiCanvas = FindObjectOfType<Canvas>();
 
         // 新增：在 UI Canvas 中实例化得分文本预制体并放置在图标位置
         if (scoreTextPrefab != null && uiCanvas != null)
@@ -174,8 +182,7 @@ public class IconTarget : MonoBehaviour
             }
         }
 
-        // 原来的调试输出或在此播放音效/动画
-        print(12345);
+        Debug.Log($"IconTarget.OnCleared: {gameObject.name} original={scoreValue} applied={appliedPoints}");
 
         // 根据设置隐藏对象（如果想在动画后隐藏，可改为在动画事件里隐藏）
         if (hideOnCleared)

@@ -80,7 +80,7 @@ public class eraser : MonoBehaviour
 
     /// <summary>
     /// 在运行时切换要擦除的顶层 RawImage。
-    /// 会重新创建 drawTexture、更新 parentCanvas，并为所有已知 IconTarget 重新计算像素矩形。
+    /// 会重新创建 drawTexture、更新 parentCanvas，并为该卡片范围内的 IconTarget 重新计算像素矩形。
     /// 调用方应在激活对应卡片（SetActive(true)）后调用此方法；此方法内部会尝试刷新布局。
     /// </summary>
     public void SetTopImage(RawImage newTopImage)
@@ -122,13 +122,44 @@ public class eraser : MonoBehaviour
         }
         topImage.texture = drawTexture;
 
-        // 重新计算所有 icon 的像素矩形（基于新的 topImage 布局/uv）
-        for (int i = 0; i < icons.Count; i++)
+        // Rebuild icons list but only for the card that owns this topImage.
+        // Find the nearest ancestor of the topImage that actually contains IconTarget children,
+        // so we don't collect IconTargets from other cards in the scene.
+        icons.Clear();
+
+        Transform t = topImage.transform;
+        Transform cardRoot = null;
+        while (t != null)
         {
-            var icon = icons[i];
-            if (icon == null || icon.target == null) continue;
-            icon.pixelRect = ComputeIconPixelRect(icon.target.GetComponent<RectTransform>());
-            icon.cleared = icon.target.isCleared;
+            var foundInAncestor = t.GetComponentsInChildren<IconTarget>(true);
+            if (foundInAncestor != null && foundInAncestor.Length > 0)
+            {
+                cardRoot = t;
+                break;
+            }
+            t = t.parent;
+        }
+
+        IconTarget[] found;
+        if (cardRoot != null)
+        {
+            found = cardRoot.GetComponentsInChildren<IconTarget>(true);
+            Debug.Log($"eraser.SetTopImage: found {found.Length} IconTarget(s) under cardRoot '{cardRoot.name}'.");
+        }
+        else
+        {
+            // Fallback: search entire scene (shouldn't normally happen)
+            found = FindObjectsOfType<IconTarget>();
+            Debug.LogWarning($"eraser.SetTopImage: could not find a card root; falling back to global search ({found.Length} IconTargets).");
+        }
+
+        foreach (var it in found)
+        {
+            IconData data = new IconData();
+            data.target = it;
+            data.cleared = it.isCleared;
+            data.pixelRect = ComputeIconPixelRect(it.GetComponent<RectTransform>());
+            icons.Add(data);
         }
     }
 

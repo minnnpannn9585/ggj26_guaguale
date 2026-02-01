@@ -11,10 +11,12 @@ public class NextCardBtn : MonoBehaviour
 
     public eraser era;
     public RawImage[] raws;
+    public GameObject changeHandAnim;
     
     public void ShowNextCard()
     {
         cards[currentIndex].GetComponent<Animator>().SetTrigger("finish");
+        changeHandAnim.SetActive(true);
         Invoke("ActivateNextCard", 1.0f);
     }
 
