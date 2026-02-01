@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,8 +13,8 @@ public class InGameUi : MonoBehaviour
     
     void Update()
     {
-        scoreText.text = "Score: " + GameManager.Instance.Score.ToString();
-        timerText.text = "Time: " + Mathf.CeilToInt(GameManager.Instance.timer).ToString();
+        scoreText.text = "分数：$" + GameManager.Instance.Score.ToString();
+        timerText.text = "倒计时：" + Mathf.CeilToInt(GameManager.Instance.timer).ToString() + "s";
         timerBar.fillAmount = GameManager.Instance.timer / 59f;
     }
 }

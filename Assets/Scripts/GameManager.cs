@@ -46,6 +46,10 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if(timer >= 59f)
+        {
+            timer = 59f;
+        }
         // tick timer
         timer -= Time.deltaTime;
         if (timer <= 0)
