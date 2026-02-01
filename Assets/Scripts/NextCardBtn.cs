@@ -18,6 +18,7 @@ public class NextCardBtn : MonoBehaviour
         cards[currentIndex].GetComponent<Animator>().SetTrigger("finish");
         changeHandAnim.SetActive(true);
         Invoke("ActivateNextCard", 1.0f);
+        AudioManager.Instance.PlayNextPaper(Vector3.zero);
     }
 
     public void ActivateNextCard()

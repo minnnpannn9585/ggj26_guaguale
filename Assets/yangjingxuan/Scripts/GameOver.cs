@@ -95,6 +95,7 @@ public class GameOver : MonoBehaviour
         if (total > 0 && ratio >= requiredRatio)
         {
             TriggerGameOver();
+            AudioManager.Instance.PlayBoomSound(Vector3.zero);
         }
     }
 

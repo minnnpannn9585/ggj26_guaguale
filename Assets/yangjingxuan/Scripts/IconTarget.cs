@@ -7,6 +7,7 @@
 /// </summary>
 public class IconTarget : MonoBehaviour
 {
+    public int Sounds = 0;
     // 已被清除（得分）标记
     [HideInInspector] public bool isCleared = false;
 
@@ -76,6 +77,14 @@ public class IconTarget : MonoBehaviour
         isCleared = true;
 
         int appliedPoints = 0;
+        if(Sounds == 0)
+        {
+            AudioManager.Instance.PlayGetScore(Vector3.zero);
+        }
+        if(Sounds == 1)
+        {
+            AudioManager.Instance.PlayShitSound(Vector3.zero);
+        }
         // 这里处理得分逻辑（将 GameManager 的调用放在 IconTarget）
         if (GameManager.Instance != null)
         {

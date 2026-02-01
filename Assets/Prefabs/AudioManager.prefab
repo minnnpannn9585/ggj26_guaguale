@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8001734385234978737
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3813678383719318112}
+  - component: {fileID: 8425968980376221478}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3813678383719318112
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8001734385234978737}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.4072993, y: -0.25071448, z: 0.027552458}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8425968980376221478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8001734385234978737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3697bcc2d0a9df342b2db6bc1b175fc2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AddFoodSound: {fileID: 8300000, guid: 815eaa45957bfc241924c50a956f09ec, type: 3}
+  BoilingSound: {fileID: 8300000, guid: a6e855ffba98d2c4791bd99376110ff7, type: 3}
+  BoomSound: {fileID: 8300000, guid: cf84249227a86aa46b9a84b3f748934b, type: 3}
+  NextPaper: {fileID: 8300000, guid: c34ac5438cba2cb47857ea9e1dfede07, type: 3}
+  RedMushroom: {fileID: 8300000, guid: c0f89dc5108c8f0479f839f57bde6765, type: 3}
+  ScrapeSound: {fileID: 8300000, guid: 2244837823a3c004aba30bad9f7f6e5f, type: 3}
+  ShitSound: {fileID: 8300000, guid: fee218d8c09b68d41a2a9445a36cb335, type: 3}
+  GetScore: {fileID: 8300000, guid: 3c3bad3e67f275c4087ac07480d15c47, type: 3}
+  GetTime: {fileID: 8300000, guid: a3aed28b888bd624486aa92cf68d7f8b, type: 3}
+  LoseTime: {fileID: 8300000, guid: f016b70c9ab906a4b8ffd5d175749edf, type: 3}
+  LoseScore: {fileID: 8300000, guid: bd97195a9ceab014dac5375cc2e970f0, type: 3}
+  Shouting: {fileID: 8300000, guid: 474db88ec2b08d041807e5091a3bbeea, type: 3}

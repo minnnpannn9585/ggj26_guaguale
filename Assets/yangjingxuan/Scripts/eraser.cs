@@ -191,6 +191,7 @@ public class eraser : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
+            //AudioManager.Instance.PlayScrapeSound(Vector3.zero);
             Vector2 localPoint;
             Camera cam = (parentCanvas != null && (parentCanvas.renderMode == RenderMode.ScreenSpaceCamera || parentCanvas.renderMode == RenderMode.WorldSpace))
                          ? parentCanvas.worldCamera
@@ -230,6 +231,7 @@ public class eraser : MonoBehaviour
             py = Mathf.Clamp(py, 0, drawTexture.height - 1);
 
             EraseAt(px, py);
+            
         }
     }
 

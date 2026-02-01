@@ -90,6 +90,7 @@ public class flower : MonoBehaviour
         if (total > 0 && ratio >= requiredRatio)
         {
             StartCoroutine(HandleReveal());
+            AudioManager.Instance.PlayShouting(Vector3.zero);
         }
     }
 

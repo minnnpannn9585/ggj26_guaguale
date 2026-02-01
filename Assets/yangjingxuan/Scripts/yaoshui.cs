@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class yaoshui : MonoBehaviour
 {
@@ -10,9 +11,20 @@ public class yaoshui : MonoBehaviour
     [Tooltip("点击按钮时立即扣除的分数（正数表示扣分）")]
     public int scoreCost = 4;
 
+    // 点击一次后标记，防止重复点击
+    private bool clicked = false;
+
     // 点击按钮后调用（在 Button OnClick 中绑定）
     public void OnButtonClick()
     {
+        if (clicked) return;
+        clicked = true;
+
+        // 如果挂在 Button 上，禁用交互
+        var btn = GetComponent<Button>();
+        if (btn != null)
+            btn.interactable = false;
+
         if (ignoreNextAdverse && GameManager.Instance != null)
         {
             GameManager.Instance.SetIgnoreNextAdverseEvent();

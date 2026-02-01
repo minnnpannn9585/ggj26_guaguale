@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class shijian : MonoBehaviour
 {
-
+    public int sounds = 0;
         [Tooltip("判定像素 alpha<=threshold 为已被擦除（显现）")]
         public float alphaThreshold = 0.1f;
         [Tooltip("判定为已显现需要的最小比例（0-1）")]
@@ -89,6 +89,14 @@ public class shijian : MonoBehaviour
 
             if (total > 0 && ratio >= requiredRatio)
             {
+            if (sounds == 0)
+            {
+                AudioManager.Instance.PlayLoseTime(Vector3.zero);
+            }
+            if(sounds == 1)
+            {
+                AudioManager.Instance.PlayGetTime(Vector3.zero);
+            }
                 ApplyTimeDelta();
                 applied = true;
             }

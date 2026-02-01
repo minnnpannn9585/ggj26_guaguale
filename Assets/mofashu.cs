@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class mofashu : MonoBehaviour
 {
@@ -13,9 +14,20 @@ public class mofashu : MonoBehaviour
     [Tooltip("倍数持续时间（秒）")]
     public float multiplierDuration = 10f;
 
+    // 点击一次后标记，防止重复点击
+    private bool clicked = false;
+
     // 绑定到按钮的点击事件
     public void OnButtonClick()
     {
+        if (clicked) return;
+        clicked = true;
+
+        // 如果挂在 Button 上，禁用交互
+        var btn = GetComponent<Button>();
+        if (btn != null)
+            btn.interactable = false;
+
         if (GameManager.Instance == null)
         {
             Debug.LogWarning("mofashu: GameManager.Instance 未找到，无法执行操作。");
